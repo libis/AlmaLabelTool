@@ -1,0 +1,40 @@
+<project name="lbsPrint" default="compile">
+	
+    <property environment="env"/>
+    
+    <path id="build.class.path">
+        <pathelement path="${env.CLASSPATH}"/>
+        <pathelement path="build/classes"/>
+        <fileset dir="lib">
+            <include name="**/*.jar"/>
+        </fileset>
+    </path>
+    
+    <target name="compile"
+            depends="clean"
+            description="Compile and create jar">
+        <mkdir dir="build/classes"/>
+    	<echo message="Using Java version ${ant.java.version}."/>
+        <javac srcdir="src"
+               destdir="build/classes"
+               source="1.7"
+               target="1.7"
+               debug="off">
+            <include name="**/*.java"/>
+            <classpath refid="build.class.path"/>
+        </javac>
+        <jar jarfile="AlmaLabelTool.jar" basedir="build/classes" manifest="Manifest.txt"/>
+ 
+    </target>
+	
+	<target name="run"
+			depends="compile">
+   		<java jar="AlmaLabelTool.jar" fork="true"/>
+	</target>
+  
+    <target name="clean"
+            description="Remove compiled files">
+        <delete dir="build" />
+    </target>  
+  
+</project>

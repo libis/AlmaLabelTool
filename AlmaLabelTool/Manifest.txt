@@ -1,0 +1,2 @@
+Main-Class: be.libis.almaLabelTool.LabelTool
+Class-Path: lib/alma-sdk.1.0.jar
