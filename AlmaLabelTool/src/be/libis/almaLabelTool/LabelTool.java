@@ -23,7 +23,7 @@ public class LabelTool implements ActionListener
     static int SINGLECARD = 5;
     static int SINGLEADDRESS = 6;
 
-    int mode = 3; // 0=undef, 1=multibarcode, 2=multispine, 3=singlebarcode,
+    int mode = 0; // 0=undef, 1=multibarcode, 2=multispine, 3=singlebarcode,
                   // 4=singlespine)
 
     String almaUser=null;
@@ -114,6 +114,7 @@ public class LabelTool implements ActionListener
 
     public void actionPerformed(ActionEvent e)
     {
+        frame.setEnabled(false);
         try
         {
             if ("barcodes".equals(e.getActionCommand()))
@@ -186,6 +187,10 @@ public class LabelTool implements ActionListener
             showError(ee, "actionPerformed", "");
             System.out.println("Error in actionPerformed: " + ee);
             System.out.println("ActionEvent: " + e);
+        }
+        finally
+        {
+            frame.setEnabled(true);
         }
     }
 
