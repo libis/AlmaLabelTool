@@ -36,8 +36,9 @@ public class AlmaLabel
             PrintWriter out=new PrintWriter(file, "UTF-8");
             try
             {
-                out.print("<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n");   
-                out.print(xmlLabel);   
+                out.print("<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n");
+                
+                out.print(xmlLabel);                  
             }
             catch (Exception e)
             {
@@ -65,17 +66,19 @@ public class AlmaLabel
         paramsMap.put(AlmaWebServices.INPUT_PARAM_3, isBarcode);
 
         xmlLabel=aws.invoke(AlmaWebServices.LABEL_PRINTING_WS, AlmaWebServices.LABEL_PRINTING_GET_METHOD, paramsMap);
-        xmlLabel=xmlLabel.substring(xmlLabel.indexOf("<printout>"), xmlLabel.indexOf("</printout>")+11);
-        if (xmlLabel != null)
-        {
-            System.out.println("\nWebservice: success\n Data size: " + xmlLabel.length());
-            return xmlLabel;
-        }
-        else
+        if (xmlLabel == null)
         {
             System.out.println("\nWebservice: failed, xmlLabel is null");
             return null;
         }
+        else
+        {
+            System.out.println("\nxmlLabel is not null: OK");
+            //System.out.print(xmlLabel);
+        }
+        xmlLabel=xmlLabel.substring(xmlLabel.indexOf("<printout>"), xmlLabel.indexOf("</printout>")+11);
+        System.out.println("\nWebservice: success\n Data size: " + xmlLabel.length());
+        return xmlLabel;
     }
     
     public String getUserLabel(String userIdentifier) throws SOAPException

@@ -6,13 +6,13 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
-import java.util.Properties;
+import java.util.*;
 import java.nio.file.*;
 import static java.nio.file.StandardCopyOption.*;
 
 public class LabelTool implements ActionListener
 {
-    static String VERSION = "1.0.1";
+    static String VERSION = "1.0.9";
 
     static String MANUF = "LIBIS 2014";
 
@@ -449,25 +449,34 @@ public class LabelTool implements ActionListener
                 return;
             }
             //print barcode
-            runBIAF(filePath, preview, "PrinterSingle");
+            //add runBIAFold=true to labeltool.ini to use the old way of running BIAF
+            //this is not in the documentation!
+            if (p.getProperty("runBIAFold", "false").equalsIgnoreCase("true"))
+            {
+                runBIAForiginal(filePath, preview, "PrinterSingle");
+            }
+            else
+            {
+                runBIAF(filePath, preview, "PrinterSingle");
+            }
         }
         else
         {
             JOptionPane.showMessageDialog(frame, "No data returned: probably wrong User Identifier", "Info", JOptionPane.INFORMATION_MESSAGE);
         }
     }
-
-    private void runBIAF(String filePath, boolean preview, String printerParam)
+//TODO TESTEN runBIAF en de optie runBIAFold alvorens volgende versie te verspreiden
+    private void runBIAForiginal(String filePath, boolean preview, String printerParam)
     {
         InputStream stderr = null;
         InputStream stdout = null;
         String strData = null;
 
         StringBuffer cm = new StringBuffer("");
-        cm=cm.append(" \"").append(p.getProperty("BiafPath", "C:/Program Files/BIAF/BIAFLABEL/AddToQueue.exe")).append(" \"");
+        cm=cm.append(" \"").append(p.getProperty("BiafPath", "C:/Program Files/BIAFLABEL/AddToQueue.exe")).append(" \"");
         String printer = new String(p.getProperty(printerParam, ""));
         printer = printer.trim();
-
+        System.out.println("runBIAF Printer=" + printer);
         cm = cm.append(" ").append(filePath);
         if (!printer.equals(""))
         {
@@ -511,6 +520,118 @@ public class LabelTool implements ActionListener
         }
     }
     
+    private void runBIAF(String filePath, boolean preview, String printerParam)
+    {
+        InputStream stderr = null;
+        InputStream stdout = null;
+        String strData = null;
+
+        String[] cm = new String[4];
+        cm[0]=p.getProperty("BiafPath", "C:/Program Files/BIAFLABEL/AddToQueue.exe");
+        String printer = new String(p.getProperty(printerParam, ""));
+        printer = printer.trim();
+        System.out.println("runBIAF Printer=" + printer);
+        cm[1] = filePath.replaceAll("\\\\", "/");
+        if (!printer.equals(""))
+        {
+            cm[2] = "-printer " + printer;
+        }
+        else
+        {
+            cm[2] = "";
+        }
+        if (preview)
+        {
+            cm[3] = "-preview";
+        }
+        else
+        {
+            cm[3] = "";
+        }
+        // out.write("[" + now() + "] " + "command: " + cm.toString() + "\r\n");
+        try
+        {
+            StringBuffer sb = new StringBuffer("");
+            System.out.println("runBIAF: " );
+            System.out.println(cm[0]);
+            System.out.println(cm[1]);
+            System.out.println(cm[2]);
+            System.out.println(cm[3]);
+            Process p = Runtime.getRuntime().exec(cm);
+            p.waitFor();
+            System.out.println("runBIAF completed");
+            stdout = p.getInputStream();
+            stderr = p.getErrorStream();
+
+            BufferedReader brData = new BufferedReader(new InputStreamReader(stdout));
+            while ((strData = brData.readLine()) != null)
+            {
+                sb = sb.append(strData).append("\r\n");
+            }
+            brData.close();
+
+            brData = new BufferedReader(new InputStreamReader(stderr));
+            while ((strData = brData.readLine()) != null)
+            {
+                sb = sb.append(strData).append("\r\n");
+            }
+            brData.close();
+            System.out.println("runBIAF out: " + sb);
+        }
+        catch (Exception e)
+        {
+            showError(e, "LabelTool", "Error running BIAF: " + cm);
+            System.out.println("Error running BIAF: " + e);
+            return;
+        }
+    }
+    
+    private void runBIAFnotworking (String filePath, boolean preview, String printerParam)
+    {
+        
+        java.util.List<String> cm = new ArrayList<String>();
+        String line;
+        
+        cm.add("C:/Program Files/BIAFLABEL/AddToQueue.exe");
+        cm.add(filePath);
+        
+        String printer = new String(p.getProperty(printerParam, ""));
+        printer = printer.trim(); //TODO remove ""
+        System.out.println("runBIAF Printer=" + printer);
+        if (!printer.equals(""))
+        {
+            cm.add("-printer " + printer);
+        }
+        if (preview)
+        {
+            cm.add("-preview");
+        }
+        try
+        {
+            System.out.println("Running BIAF...");
+            System.out.println(cm.toString());
+            ProcessBuilder builder = new ProcessBuilder(cm);
+            Map<String, String> environ = builder.environment();
+            //builder.directory(new File(System.getenv("temp")));
+            //System.out.println("BIAF Temp Directory: " + System.getenv("temp") );
+            final Process process = builder.start();
+            InputStream is = process.getInputStream();
+            InputStreamReader isr = new InputStreamReader(is);
+            BufferedReader br = new BufferedReader(isr);
+            while ((line = br.readLine()) != null) 
+            {
+              System.out.println(line);
+            }
+            System.out.println("BIAF finished");
+        }
+        catch (Exception e)
+        {
+            showError(e, "LabelTool", "Error running BIAF");
+            System.out.println("Error running BIAF: " + e);
+            return;
+        }
+    }
+    
     private String xmlConvert(String filePath)
     {
         InputStream stderr = null;
@@ -534,10 +655,10 @@ public class LabelTool implements ActionListener
             return null;
         }
         
-        cm = cm.append(" \"").append(p.getProperty("saxonPath", "C:Program Files/BIAF/Alma Label Tool/saxon9he.jar")).append("\"");
+        cm = cm.append(" \"").append(p.getProperty("saxonPath", "C:Program Files/Alma Label Tool/saxon9he.jar")).append("\"");
         cm = cm.append(" -o:").append(resultFile.getAbsolutePath());
         cm = cm.append(" ").append(filePath);
-        cm = cm.append(" \"").append(p.getProperty("userxslPath", "C:Program Files/BIAF/Alma Label Tool/user.xsl")).append(" \"");
+        cm = cm.append(" \"").append(p.getProperty("userxslPath", "C:Program Files/Alma Label Tool/user.xsl")).append(" \"");
         System.out.println("command: " + cm.toString() + "\r\n");        
         try
         {            
@@ -693,7 +814,9 @@ public class LabelTool implements ActionListener
             }
             return null;
         }
-        
+        //escape & with another ampersand to avoid BIAF mnemonic interpretation!
+        //add doubleAmp=false to labeltool.ini to undo double &
+        //this is not in documentation!
         return almaLabel.save(resultFile); //returns filepath if successful, null on failure
     }
     
@@ -704,17 +827,17 @@ public class LabelTool implements ActionListener
         try
         {
             source = FileSystems.getDefault().getPath(
-                    p.getProperty("TemplatesPath", "C:/Program Files/BIAF/BIAFLABEL/Templates") + "/"
+                    p.getProperty("TemplatesPath", "C:/Program Files/BIAFLABEL/Templates") + "/"
                             + p.getProperty(parameterName, defValue) + ".lbs");
             dest = FileSystems.getDefault().getPath(
-                    p.getProperty("TemplatesPath", "C:/Program Files/BIAF/BIAFLABEL/Templates") + "/libis.lbs");
+                    p.getProperty("TemplatesPath", "C:/Program Files/BIAFLABEL/Templates") + "/libis.lbs");
             Files.copy(source, dest, REPLACE_EXISTING);
 
             source = FileSystems.getDefault().getPath(
-                    p.getProperty("TemplatesPath", "C:/Program Files/BIAF/BIAFLABEL/Templates") + "/"
+                    p.getProperty("TemplatesPath", "C:/Program Files/BIAFLABEL/Templates") + "/"
                             + p.getProperty(parameterName, defValue) + ".lrs");
             dest = FileSystems.getDefault().getPath(
-                    p.getProperty("TemplatesPath", "C:/Program Files/BIAF/BIAFLABEL/Templates") + "/libis.lrs");
+                    p.getProperty("TemplatesPath", "C:/Program Files/BIAFLABEL/Templates") + "/libis.lrs");
             Files.copy(source, dest, REPLACE_EXISTING);
         }
         catch (Exception e)
