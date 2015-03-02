@@ -211,7 +211,21 @@ public class LabelTool implements ActionListener
             }
         }
         String filePath = filePicker.getSelectedFilePath();
-        runBIAF(filePath, preview, "PrinterMulti");
+        String saxonPath = p.getProperty("saxonPath", "C:/Program Files/Alma Label Tool/saxon9he.jar");
+        String barcodespinexslPath = p.getProperty("barcodespinexslPath", "C:/Program Files/Alma Label Tool/barcodespine.xsl");
+        //transform local if barcodespinexslPath not empty
+        if (!barcodespinexslPath.trim().equals(""))
+        {
+            filePath=xmlConvert(filePath,saxonPath,barcodespinexslPath);
+        }
+        if (filePath!=null)
+        {
+            runBIAF(filePath, preview, "PrinterMulti");
+        }
+        else
+        {
+            JOptionPane.showMessageDialog(frame, "No data returned: probably Error transforming XML data", "Info", JOptionPane.INFORMATION_MESSAGE);
+        }
     }
 
     private void spines_click(boolean preview) throws Exception
@@ -231,7 +245,21 @@ public class LabelTool implements ActionListener
             }
         }
         String filePath = filePicker.getSelectedFilePath();
-        runBIAF(filePath, preview, "PrinterMulti");
+        String saxonPath = p.getProperty("saxonPath", "C:/Program Files/Alma Label Tool/saxon9he.jar");
+        String barcodespinexslPath = p.getProperty("barcodespinexslPath", "C:/Program Files/Alma Label Tool/barcodespine.xsl");
+        //transform local if barcodespinexslPath not empty
+        if (!barcodespinexslPath.trim().equals(""))
+        {
+            filePath=xmlConvert(filePath,saxonPath,barcodespinexslPath);
+        }
+        if (filePath!=null)
+        {
+            runBIAF(filePath, preview, "PrinterMulti");
+        }
+        else
+        {
+            JOptionPane.showMessageDialog(frame, "No data returned: probably Error transforming XML data", "Info", JOptionPane.INFORMATION_MESSAGE);
+        }
     }
 
     private void barcode_click(boolean preview) throws Exception
@@ -251,13 +279,25 @@ public class LabelTool implements ActionListener
             }
         }
         String filePath = getAlmaLabel();
+        if (filePath==null)
+        {
+            JOptionPane.showMessageDialog(frame, "No data returned: probably wrong PID or barcode", "Info", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        String saxonPath = p.getProperty("saxonPath", "C:/Program Files/Alma Label Tool/saxon9he.jar");
+        String barcodespinexslPath = p.getProperty("barcodespinexslPath", "C:/Program Files/Alma Label Tool/barcodespine.xsl");
+        //transform local if barcodespinexslPath not empty
+        if (!barcodespinexslPath.trim().equals(""))
+        {
+            filePath=xmlConvert(filePath,saxonPath,barcodespinexslPath);
+        }
         if (filePath!=null)
         {
             runBIAF(filePath, preview, "PrinterSingle");
         }
         else
         {
-            JOptionPane.showMessageDialog(frame, "No data returned: probably wrong PID or barcode", "Info", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(frame, "No data returned: probably Error transforming XML data", "Info", JOptionPane.INFORMATION_MESSAGE);
         }
     }
     
@@ -278,13 +318,25 @@ public class LabelTool implements ActionListener
             }
         }
         String filePath = getAlmaLabel();
+        if (filePath==null)
+        {
+            JOptionPane.showMessageDialog(frame, "No data returned: probably wrong PID or barcode", "Info", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        String saxonPath = p.getProperty("saxonPath", "C:/Program Files/Alma Label Tool/saxon9he.jar");
+        String barcodespinexslPath = p.getProperty("barcodespinexslPath", "C:/Program Files/Alma Label Tool/barcodespine.xsl");
+        //transform local if barcodespinexslPath not empty
+        if (!barcodespinexslPath.trim().equals(""))
+        {
+            filePath=xmlConvert(filePath,saxonPath,barcodespinexslPath);
+        }
         if (filePath!=null)
         {
             runBIAF(filePath, preview, "PrinterSingle");
         }
         else
         {
-            JOptionPane.showMessageDialog(frame, "No data returned: probably wrong PID or barcode", "Info", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(frame, "No data returned: probably Error transforming XML data", "Info", JOptionPane.INFORMATION_MESSAGE);
         }
     }
     
@@ -307,6 +359,19 @@ public class LabelTool implements ActionListener
             }
         }
         String filePath = getAlmaLabel();
+        if (filePath==null)
+        {
+            JOptionPane.showMessageDialog(frame, "No data returned: probably wrong PID or barcode", "Info", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        
+        String saxonPath = p.getProperty("saxonPath", "C:/Program Files/Alma Label Tool/saxon9he.jar");
+        String barcodespinexslPath = p.getProperty("barcodespinexslPath", "C:/Program Files/Alma Label Tool/barcodespine.xsl");
+        //transform local if barcodespinexslPath not empty
+        if (!barcodespinexslPath.trim().equals(""))
+        {
+            filePath=xmlConvert(filePath,saxonPath,barcodespinexslPath);
+        }
         if (filePath!=null)
         {
             //print spine
@@ -330,12 +395,13 @@ public class LabelTool implements ActionListener
             {
                 return;
             }
+            
             //print barcode
             runBIAF(filePath, preview, "PrinterSingle");
         }
         else
         {
-            JOptionPane.showMessageDialog(frame, "No data returned: probably wrong PID or barcode", "Info", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(frame, "No data returned: probably Error transforming XML data", "Info", JOptionPane.INFORMATION_MESSAGE);
         }
     }
     
@@ -358,7 +424,9 @@ public class LabelTool implements ActionListener
         String filePath = getAlmaLabel();
         if (filePath!=null)
         {
-            filePath=xmlConvert(filePath);
+            String saxonPath = p.getProperty("saxonPath", "C:/Program Files/Alma Label Tool/saxon9he.jar");
+            String userxslPath = p.getProperty("userxslPath", "C:/Program Files/Alma Label Tool/user.xsl");
+            filePath=xmlConvert(filePath,saxonPath,userxslPath);
         }
         if (filePath!=null)
         {
@@ -389,7 +457,9 @@ public class LabelTool implements ActionListener
         String filePath = getAlmaLabel();
         if (filePath!=null)
         {
-            filePath=xmlConvert(filePath);
+            String saxonPath = p.getProperty("saxonPath", "C:/Program Files/Alma Label Tool/saxon9he.jar");
+            String userxslPath = p.getProperty("userxslPath", "C:/Program Files/Alma Label Tool/user.xsl");
+            filePath=xmlConvert(filePath,saxonPath,userxslPath);
         }
         if (filePath!=null)
         {
@@ -422,7 +492,9 @@ public class LabelTool implements ActionListener
         String filePath = getAlmaLabel();
         if (filePath!=null)
         {
-            filePath=xmlConvert(filePath);
+            String saxonPath = p.getProperty("saxonPath", "C:/Program Files/Alma Label Tool/saxon9he.jar");
+            String userxslPath = p.getProperty("userxslPath", "C:/Program Files/Alma Label Tool/user.xsl");
+            filePath=xmlConvert(filePath,saxonPath,userxslPath);
         }
         if (filePath!=null)
         {
@@ -632,7 +704,7 @@ public class LabelTool implements ActionListener
         }
     }
     
-    private String xmlConvert(String filePath)
+    private String xmlConvert(String file, String saxon, String xsl)
     {
         InputStream stderr = null;
         InputStream stdout = null;
@@ -655,10 +727,10 @@ public class LabelTool implements ActionListener
             return null;
         }
         
-        cm = cm.append(" \"").append(p.getProperty("saxonPath", "C:Program Files/Alma Label Tool/saxon9he.jar")).append("\"");
+        cm = cm.append(" \"").append(saxon).append("\"");
         cm = cm.append(" -o:").append(resultFile.getAbsolutePath());
-        cm = cm.append(" ").append(filePath);
-        cm = cm.append(" \"").append(p.getProperty("userxslPath", "C:Program Files/Alma Label Tool/user.xsl")).append(" \"");
+        cm = cm.append(" ").append(file);
+        cm = cm.append(" \"").append(xsl).append(" \"");
         System.out.println("command: " + cm.toString() + "\r\n");        
         try
         {            
