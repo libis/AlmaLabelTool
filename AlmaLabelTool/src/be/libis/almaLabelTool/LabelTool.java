@@ -12,7 +12,7 @@ import static java.nio.file.StandardCopyOption.*;
 
 public class LabelTool implements ActionListener
 {
-    static String VERSION = "1.0.9";
+    static String VERSION = "1.0.10";
 
     static String MANUF = "LIBIS 2014";
 
@@ -28,6 +28,8 @@ public class LabelTool implements ActionListener
 
     String almaUser=null;
     String almaPW=null;
+    Boolean parsedInAlma=null; //true=xml was parsed in Alma / false=try to parse xml local
+                               //checked in getAlmaLabel() based on presence of tag <lbs-spine1>
     
     JFrame frame;
     JTextField pidText;
@@ -211,13 +213,7 @@ public class LabelTool implements ActionListener
             }
         }
         String filePath = filePicker.getSelectedFilePath();
-        String saxonPath = p.getProperty("saxonPath", "C:/Program Files/Alma Label Tool/saxon9he.jar");
-        String barcodespinexslPath = p.getProperty("barcodespinexslPath", "C:/Program Files/Alma Label Tool/barcodespine.xsl");
-        //transform local if barcodespinexslPath not empty
-        if (!barcodespinexslPath.trim().equals(""))
-        {
-            filePath=xmlConvert(filePath,saxonPath,barcodespinexslPath);
-        }
+        filePath = parseLocal(filePath);
         if (filePath!=null)
         {
             runBIAF(filePath, preview, "PrinterMulti");
@@ -245,13 +241,7 @@ public class LabelTool implements ActionListener
             }
         }
         String filePath = filePicker.getSelectedFilePath();
-        String saxonPath = p.getProperty("saxonPath", "C:/Program Files/Alma Label Tool/saxon9he.jar");
-        String barcodespinexslPath = p.getProperty("barcodespinexslPath", "C:/Program Files/Alma Label Tool/barcodespine.xsl");
-        //transform local if barcodespinexslPath not empty
-        if (!barcodespinexslPath.trim().equals(""))
-        {
-            filePath=xmlConvert(filePath,saxonPath,barcodespinexslPath);
-        }
+        filePath = parseLocal(filePath);
         if (filePath!=null)
         {
             runBIAF(filePath, preview, "PrinterMulti");
@@ -284,13 +274,7 @@ public class LabelTool implements ActionListener
             JOptionPane.showMessageDialog(frame, "No data returned: probably wrong PID or barcode", "Info", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
-        String saxonPath = p.getProperty("saxonPath", "C:/Program Files/Alma Label Tool/saxon9he.jar");
-        String barcodespinexslPath = p.getProperty("barcodespinexslPath", "C:/Program Files/Alma Label Tool/barcodespine.xsl");
-        //transform local if barcodespinexslPath not empty
-        if (!barcodespinexslPath.trim().equals(""))
-        {
-            filePath=xmlConvert(filePath,saxonPath,barcodespinexslPath);
-        }
+        filePath = parseLocal(filePath);
         if (filePath!=null)
         {
             runBIAF(filePath, preview, "PrinterSingle");
@@ -323,13 +307,8 @@ public class LabelTool implements ActionListener
             JOptionPane.showMessageDialog(frame, "No data returned: probably wrong PID or barcode", "Info", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
-        String saxonPath = p.getProperty("saxonPath", "C:/Program Files/Alma Label Tool/saxon9he.jar");
-        String barcodespinexslPath = p.getProperty("barcodespinexslPath", "C:/Program Files/Alma Label Tool/barcodespine.xsl");
-        //transform local if barcodespinexslPath not empty
-        if (!barcodespinexslPath.trim().equals(""))
-        {
-            filePath=xmlConvert(filePath,saxonPath,barcodespinexslPath);
-        }
+        filePath = parseLocal(filePath);
+ 
         if (filePath!=null)
         {
             runBIAF(filePath, preview, "PrinterSingle");
@@ -365,13 +344,7 @@ public class LabelTool implements ActionListener
             return;
         }
         
-        String saxonPath = p.getProperty("saxonPath", "C:/Program Files/Alma Label Tool/saxon9he.jar");
-        String barcodespinexslPath = p.getProperty("barcodespinexslPath", "C:/Program Files/Alma Label Tool/barcodespine.xsl");
-        //transform local if barcodespinexslPath not empty
-        if (!barcodespinexslPath.trim().equals(""))
-        {
-            filePath=xmlConvert(filePath,saxonPath,barcodespinexslPath);
-        }
+        filePath = parseLocal(filePath);
         if (filePath!=null)
         {
             //print spine
@@ -537,7 +510,7 @@ public class LabelTool implements ActionListener
             JOptionPane.showMessageDialog(frame, "No data returned: probably wrong User Identifier", "Info", JOptionPane.INFORMATION_MESSAGE);
         }
     }
-//TODO TESTEN runBIAF en de optie runBIAFold alvorens volgende versie te verspreiden
+
     private void runBIAForiginal(String filePath, boolean preview, String printerParam)
     {
         InputStream stderr = null;
@@ -658,7 +631,7 @@ public class LabelTool implements ActionListener
         }
     }
     
-    private void runBIAFnotworking (String filePath, boolean preview, String printerParam)
+    /*private void runBIAFnotworking (String filePath, boolean preview, String printerParam)
     {
         
         java.util.List<String> cm = new ArrayList<String>();
@@ -668,7 +641,7 @@ public class LabelTool implements ActionListener
         cm.add(filePath);
         
         String printer = new String(p.getProperty(printerParam, ""));
-        printer = printer.trim(); //TODO remove ""
+        printer = printer.trim(); 
         System.out.println("runBIAF Printer=" + printer);
         if (!printer.equals(""))
         {
@@ -702,6 +675,27 @@ public class LabelTool implements ActionListener
             System.out.println("Error running BIAF: " + e);
             return;
         }
+    }*/
+    
+    private String parseLocal(String filePath)
+    {   
+        //transform local if not transformed in Alma
+        if (!parsedInAlma)
+        {
+            String saxonPath = p.getProperty("saxonPath", "C:/Program Files/Alma Label Tool/saxon9he.jar");
+            String barcodespinexslPath = p.getProperty("barcodespinexslPath", "C:/Program Files/Alma Label Tool/barcodespine.xsl");
+            
+            if (!barcodespinexslPath.trim().equals(""))
+            {
+                File f = new File(barcodespinexslPath.trim());
+            
+                if (f.exists())
+                {
+                    filePath=xmlConvert(filePath,saxonPath,barcodespinexslPath);
+                }
+            }
+        }
+        return filePath;
     }
     
     private String xmlConvert(String file, String saxon, String xsl)
@@ -863,6 +857,15 @@ public class LabelTool implements ActionListener
             if (xmlLabel!=null && xmlLabel.length()>500)
             {
                 System.out.println("got almaLabel");
+                //check if parsed in Alma and set Boolean
+                if (xmlLabel.contains("<lbs-spine1>"))
+                {
+                    parsedInAlma=true;
+                }
+                else
+                {
+                    parsedInAlma=false;
+                }
             }
             else
             {
