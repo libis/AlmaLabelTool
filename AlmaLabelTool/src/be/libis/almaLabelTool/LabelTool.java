@@ -2,6 +2,19 @@ package be.libis.almaLabelTool;
 
 import be.libis.utils.*;
 import javax.swing.*;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
+import org.apache.commons.lang3.StringEscapeUtils;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -12,7 +25,7 @@ import static java.nio.file.StandardCopyOption.*;
 
 public class LabelTool implements ActionListener
 {
-    static String VERSION = "1.0.10";
+    static String VERSION = "1.0.11";
 
     static String MANUF = "LIBIS 2014";
 
@@ -34,10 +47,32 @@ public class LabelTool implements ActionListener
     JFrame frame;
     JTextField pidText;
     JTextField barcodeText;
-    
     JTextField idText;
-
     JFilePicker filePicker;
+    
+    JFrame editFrame;
+    JTextField line1Text;
+    JTextField line2Text;
+    JTextField line3Text;
+    JTextField line4Text;
+    JTextField line5Text;
+    JTextField line6Text;
+    JTextField locationText;
+    JTextField barcode1Text;
+    JTextField callnumberText;
+    JTextField numberOfLabelsText;
+    int numberOfLabels=1;//only for edit screen
+    boolean checkDigit = false;
+    
+    String lbspine1Edit="";
+    String lbspine2Edit="";
+    String lbspine3Edit="";
+    String lbspine4Edit="";
+    String lbspine5Edit="";
+    String lbspine6Edit="";
+    String locationcodeEdit="";
+    String barcodeEdit="";
+    String callnumberEdit="";
 
     Properties p = null;  
 
@@ -75,6 +110,11 @@ public class LabelTool implements ActionListener
         {
             System.out.println("Error reading ini-file: " + e);
             return;
+        }
+        
+        if (p.getProperty("checkDigit", "true").toUpperCase().equals("TRUE"))
+        {
+            checkDigit = true;
         }
         
         JComponent panel1 = makeTextPanel1("Print labels from Alma export file");
@@ -119,41 +159,66 @@ public class LabelTool implements ActionListener
         frame.setEnabled(false);
         try
         {
+            numberOfLabels=isNumeric(numberOfLabelsText.getText());
+        }
+        catch (Exception ee)
+        {
+            numberOfLabels=1;
+        }
+        try
+        {
             if ("barcodes".equals(e.getActionCommand()))
             {
-                barcodes_click(false);
+                System.out.println("print barcodes");
+                process_barcode_spine(false, true, MULTIBARCODE);
             }
             else if ("spines".equals(e.getActionCommand()))
             {
-                spines_click(false);
+                System.out.println("print spines");
+                process_barcode_spine(false, true, MULTISPINE);
             }
             else if ("pbarcodes".equals(e.getActionCommand()))
             {
-                barcodes_click(true);
+                System.out.println("preview barcodes");
+                process_barcode_spine(true, true, MULTIBARCODE);
             }
             else if ("pspines".equals(e.getActionCommand()))
             {
-                spines_click(true);
+                System.out.println("preview spines");
+                process_barcode_spine(true, true, MULTISPINE);
             }
             if ("barcode".equals(e.getActionCommand()))
             {
-                barcode_click(false);
+                System.out.println("print barcode");
+                process_barcode_spine(false, true, SINGLEBARCODE);
             }
             else if ("spine".equals(e.getActionCommand()))
             {
-                spine_click(false);
+                System.out.println("print spine");
+                process_barcode_spine(false, true, SINGLESPINE);
             }
             else if ("pbarcode".equals(e.getActionCommand()))
             {
-                barcode_click(true);
+                System.out.println("preview barcode");
+                process_barcode_spine(true, true, SINGLEBARCODE);
             }
             else if ("pspine".equals(e.getActionCommand()))
             {
-                spine_click(true);
+                System.out.println("preview spine");
+                process_barcode_spine(true, true, SINGLESPINE);
             }
             else if ("both".equals(e.getActionCommand()))
             {
                 both_click(false);
+            }
+            else if ("edit".equals(e.getActionCommand()))
+            {
+                edit_click();
+            }
+            else if ("cancel".equals(e.getActionCommand()))
+            {
+                clearEditFields();
+                cancel_click();
             }
             else if ("address".equals(e.getActionCommand()))
             {
@@ -175,13 +240,78 @@ public class LabelTool implements ActionListener
             {
                 bothuser_click(false);
             }
-            else if ("save".equals(e.getActionCommand()))
+            else if ("barcodeEdit".equals(e.getActionCommand()))
             {
-                // save_click();
+                System.out.println("print edit barcode");
+                if (numberOfLabels>1)
+                {
+                    process_barcode_spine(false, false, MULTIBARCODE);
+                }
+                else
+                {
+                    process_barcode_spine(false, false, SINGLEBARCODE);
+                }
             }
-            else if ("cancel".equals(e.getActionCommand()))
+            else if ("spineEdit".equals(e.getActionCommand()))
             {
-                // cancel_click();
+                System.out.println("print edit spine");
+                if (numberOfLabels>1)
+                {
+                    process_barcode_spine(false, false, MULTISPINE);
+                }
+                else
+                {
+                    process_barcode_spine(false, false, SINGLESPINE);
+                }
+            }
+            else if ("pbarcodeEdit".equals(e.getActionCommand()))
+            {
+                System.out.println("preview edit barcode");
+                if (numberOfLabels>1)
+                {
+                    process_barcode_spine(true, false, MULTIBARCODE);
+                }
+                else
+                {
+                    process_barcode_spine(true, false, SINGLEBARCODE);
+                }
+            }
+            else if ("pspineEdit".equals(e.getActionCommand()))
+            {
+                System.out.println("preview edit spine");
+                if (numberOfLabels>1)
+                {
+                    process_barcode_spine(true, false, MULTISPINE);
+                }
+                else
+                {
+                    process_barcode_spine(true, false, SINGLESPINE);
+                }
+            }
+            else if ("bothEdit".equals(e.getActionCommand()))
+            {
+                System.out.println("print edit both");
+                if (numberOfLabels>1)
+                {
+                    //not possible to print both in one click when numberOfLabels>1
+                    JOptionPane.showMessageDialog(frame, "You can only use \"Print Both\" when \"Number of labels to print\" equals 1");
+                    return;
+                }
+                process_barcode_spine(false, false, SINGLESPINE);
+                try 
+                {
+                    Thread.sleep(Integer.parseInt(p.getProperty("BiafDelay", "1000")));
+                } 
+                catch(InterruptedException ex) 
+                {
+                    Thread.currentThread().interrupt();
+                }
+                process_barcode_spine(false, false, SINGLEBARCODE);
+            }
+            else if ("clearEdit".equals(e.getActionCommand()))
+            {
+                System.out.println("clear edit fields");
+                clearEditFields();
             }
         }
         catch (Exception ee)
@@ -196,22 +326,13 @@ public class LabelTool implements ActionListener
         }
     }
 
-    private void barcodes_click(boolean preview) throws Exception
+   /* private void barcodes_click(boolean preview) throws Exception
     {
-        System.out.println("barcodes_click");
-        if (mode != MULTIBARCODE)
+        if (!changeMode(setMode))
         {
-            // set template for multiple barcodes
-            if (renameTemplates("multipleBarcode", "barcode3x7"))
-            {
-                mode = MULTIBARCODE;
-                System.out.println("mode=" + mode);
-            }
-            else
-            {
-                return;
-            }
+            return;
         }
+ 
         String filePath = filePicker.getSelectedFilePath();
         filePath = parseLocal(filePath);
         if (filePath!=null)
@@ -226,20 +347,11 @@ public class LabelTool implements ActionListener
 
     private void spines_click(boolean preview) throws Exception
     {
-        System.out.println("spines_click");
-        if (mode != MULTISPINE)
+        if (!changeMode(setMode))
         {
-            // set template for multiple spines
-            if (renameTemplates("multipleSpine", "spine3x7"))
-            {
-                mode = MULTISPINE;
-                System.out.println("mode=" + mode);
-            }
-            else
-            {
-                return;
-            }
+            return;
         }
+        
         String filePath = filePicker.getSelectedFilePath();
         filePath = parseLocal(filePath);
         if (filePath!=null)
@@ -250,34 +362,54 @@ public class LabelTool implements ActionListener
         {
             JOptionPane.showMessageDialog(frame, "No data returned: probably Error transforming XML data", "Info", JOptionPane.INFORMATION_MESSAGE);
         }
-    }
+    }*/
 
-    private void barcode_click(boolean preview) throws Exception
+    private void process_barcode_spine(boolean preview, boolean getAlmaData, int setMode) throws Exception
     {
-        System.out.println("barcode_click");
-        if (mode != SINGLEBARCODE)
+        if (!changeMode(setMode))
         {
-            // set template for single barcode
-            if (renameTemplates("singleBarcode", "barcode"))
+            return;
+        }
+        String filePath = null;
+        if (getAlmaData)//NOT EDIT screen
+        {
+            if (mode<3) //multi: use filepicker
             {
-                mode = SINGLEBARCODE;
-                System.out.println("mode=" + mode);
+                filePath = filePicker.getSelectedFilePath();
             }
-            else
+            else //single: use webservice
             {
+                filePath=getAlmaLabel();
+                if (filePath==null)
+                {
+                    JOptionPane.showMessageDialog(frame, "No data returned: probably wrong PID or barcode", "Info", JOptionPane.INFORMATION_MESSAGE);
+                    return;
+                }
+            }
+            filePath = parseLocal(filePath);
+        }
+        else //from EDIT screen!
+        {
+            try
+            {
+                filePath=saveEditLabel();
+            }
+            catch (Exception e)
+            {
+                System.out.println("Error saving edit screen to XML-file: " + e.getMessage());
+                JOptionPane.showMessageDialog(frame, "Error saving edit screen to XML", "Info", JOptionPane.INFORMATION_MESSAGE);
                 return;
             }
         }
-        String filePath = getAlmaLabel();
-        if (filePath==null)
-        {
-            JOptionPane.showMessageDialog(frame, "No data returned: probably wrong PID or barcode", "Info", JOptionPane.INFORMATION_MESSAGE);
-            return;
-        }
-        filePath = parseLocal(filePath);
         if (filePath!=null)
         {
-            runBIAF(filePath, preview, "PrinterSingle");
+            String oneOrMore="PrinterSingle";
+            if (mode<3)//multi
+            {
+                oneOrMore="PrinterMulti";
+            }
+            System.out.println("Using temp file: " + filePath);
+            runBIAF(filePath, preview, oneOrMore);
         }
         else
         {
@@ -285,21 +417,11 @@ public class LabelTool implements ActionListener
         }
     }
     
-    private void spine_click(boolean preview) throws Exception
+ /*   private void spine_click(boolean preview, boolean getAlmaData, int setMode) throws Exception
     {
-        System.out.println("spine_click");
-        if (mode != SINGLESPINE)
+        if (!changeMode(setMode))
         {
-            // set template for single spine
-            if (renameTemplates("singleSpine", "spine"))
-            {
-                mode = SINGLESPINE;
-                System.out.println("mode=" + mode);
-            }
-            else
-            {
-                return;
-            }
+            return;
         }
         String filePath = getAlmaLabel();
         if (filePath==null)
@@ -317,7 +439,7 @@ public class LabelTool implements ActionListener
         {
             JOptionPane.showMessageDialog(frame, "No data returned: probably Error transforming XML data", "Info", JOptionPane.INFORMATION_MESSAGE);
         }
-    }
+    }*/
     
     private void both_click(boolean preview) throws Exception
     {
@@ -376,6 +498,108 @@ public class LabelTool implements ActionListener
         {
             JOptionPane.showMessageDialog(frame, "No data returned: probably Error transforming XML data", "Info", JOptionPane.INFORMATION_MESSAGE);
         }
+    }
+    
+    private void edit_click() throws Exception
+    {
+        System.out.println("edit_click");
+        //set mode to SINGLESPINE (it must be SINGLESPINE or SINGLEBARCODE)
+        if (mode != SINGLESPINE)
+        {
+            // set template for single spine
+            if (renameTemplates("singleSpine", "spine"))
+            {
+                mode = SINGLESPINE;
+                System.out.println("mode=" + mode);
+            }
+            else
+            {
+                return;
+            }
+        }
+        String filePath = null;
+        //try to get data from Alma - if PID or barcode was filled in
+        if(pidText.getText().length()!=0 || barcodeText.getText().length()!=0)
+        {
+            filePath = getAlmaLabel();
+        }     
+        if (filePath!=null)
+        {
+            //we got data from Alma
+            //parse local if needed:
+            filePath = parseLocal(filePath);
+            //read data from file and fill screen fields
+            File file = new File(filePath);
+            DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
+            Document document = documentBuilder.parse(file);
+            try{lbspine1Edit=StringEscapeUtils.unescapeXml(document.getElementsByTagName("lbs-spine1").item(0).getTextContent().trim());}
+            catch(Exception e){System.out.println("Error in edit_click() parsing XML lbs-spine1: " + e.getMessage()); e.printStackTrace();}
+            try{lbspine2Edit=StringEscapeUtils.unescapeXml(document.getElementsByTagName("lbs-spine2").item(0).getTextContent().trim());}
+            catch(Exception e){System.out.println("Error in edit_click() parsing XML lbs-spine2: " + e.getMessage()); e.printStackTrace();}
+            try{lbspine3Edit=StringEscapeUtils.unescapeXml(document.getElementsByTagName("lbs-spine3").item(0).getTextContent().trim());}
+            catch(Exception e){System.out.println("Error in edit_click() parsing XML lbs-spine3: " + e.getMessage()); e.printStackTrace();}
+            try{lbspine4Edit=StringEscapeUtils.unescapeXml(document.getElementsByTagName("lbs-spine4").item(0).getTextContent().trim());}
+            catch(Exception e){System.out.println("Error in edit_click() parsing XML lbs-spine4: " + e.getMessage()); e.printStackTrace();}
+            try{lbspine5Edit=StringEscapeUtils.unescapeXml(document.getElementsByTagName("lbs-spine5").item(0).getTextContent().trim());}
+            catch(Exception e){System.out.println("Error in edit_click() parsing XML lbs-spine5: " + e.getMessage()); e.printStackTrace();}
+            try{lbspine6Edit=StringEscapeUtils.unescapeXml(document.getElementsByTagName("lbs-spine6").item(0).getTextContent().trim());}
+            catch(Exception e){System.out.println("Error in edit_click() parsing XML lbs-spine6: " + e.getMessage()); e.printStackTrace();}
+            try{locationcodeEdit=StringEscapeUtils.unescapeXml(document.getElementsByTagName("location_code").item(0).getTextContent().trim());}
+            catch(Exception e){System.out.println("Error in edit_click() parsing XML location_code: " + e.getMessage()); e.printStackTrace();}
+            try{barcodeEdit=StringEscapeUtils.unescapeXml(document.getElementsByTagName("barcode").item(0).getTextContent().trim());}
+            catch(Exception e){System.out.println("Error in edit_click() parsing XML barcode: " + e.getMessage()); e.printStackTrace();}
+            try{callnumberEdit=StringEscapeUtils.unescapeXml(document.getElementsByTagName("call_number").item(0).getTextContent().trim());}
+            catch(Exception e){System.out.println("Error in edit_click() parsing XML call_number: " + e.getMessage()); e.printStackTrace();}
+        }
+        else
+        {
+            if (pidText.getText().length()!=0 || barcodeText.getText().length()!=0)
+            {
+                //PID or barcode was filled in but we got no data: 
+                JOptionPane.showMessageDialog(frame, "No data returned: probably wrong PID or barcode", "Info", JOptionPane.INFORMATION_MESSAGE);
+                //returning to screen "Print individual labels" without any action
+                return;
+            }
+        }
+        
+        JComponent editPanel = makeEditPanel("Edit labels", filePath);
+
+        editFrame = new JFrame("Alma Label Tool - " + VERSION + " - " + MANUF);
+        //editFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        editFrame.addWindowListener(new WindowAdapter()
+        {
+            public void windowClosing(WindowEvent e)
+            {
+                editFrame.dispose();
+                frame.setVisible(true);
+                //System.exit(0);
+            }
+        });
+
+        editFrame.getContentPane().add(editPanel, BorderLayout.CENTER);
+        // Display the window.
+        editFrame.pack();
+        editFrame.setLocationRelativeTo(null);// ==center screen
+        
+        line1Text.setText(lbspine1Edit);
+        line2Text.setText(lbspine2Edit);
+        line3Text.setText(lbspine3Edit);
+        line4Text.setText(lbspine4Edit);
+        line5Text.setText(lbspine5Edit);
+        line6Text.setText(lbspine6Edit);
+        locationText.setText(locationcodeEdit);
+        barcode1Text.setText(barcodeEdit);
+        callnumberText.setText(callnumberEdit);
+        
+        frame.setVisible(false);
+        editFrame.setVisible(true);     
+    }
+    
+    private void cancel_click() throws Exception
+    {
+        editFrame.dispose();
+        frame.setVisible(true);
     }
     
     private void card_click(boolean preview) throws Exception
@@ -895,6 +1119,187 @@ public class LabelTool implements ActionListener
         return almaLabel.save(resultFile); //returns filepath if successful, null on failure
     }
     
+    private String saveEditLabel() throws IOException 
+    //create XML from data on Edit-screen and return path to xml file
+    {
+        File resultFile = null;
+        
+        System.out.println("saveEditLabel");
+        try
+        {
+            resultFile = File.createTempFile("labeltool", ".xml");
+            System.out.println("Temp file created");
+        }
+        catch (Exception e)
+        {
+            showError(e, "saveEditLabel", "Can't create tempfile.");
+            System.out.println("Can't create tempfile: " + e);
+            return null;
+        }
+        try
+        {
+            DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
+            
+            Document doc=docBuilder.newDocument();
+            Element printout = doc.createElement("printout");
+            doc.appendChild(printout);
+            
+            Element formname = doc.createElement("form-name");
+            formname.appendChild(doc.createTextNode("Default"));
+            printout.appendChild(formname);
+            
+            Element formlanguage = doc.createElement("form-language");
+            formlanguage.appendChild(doc.createTextNode("eng"));
+            printout.appendChild(formlanguage);
+            
+            Element formformat = doc.createElement("form-format");
+            formformat.appendChild(doc.createTextNode("00"));
+            printout.appendChild(formformat);
+            
+            int i=1;
+            while (i<=numberOfLabels)//printing identical labels
+            {
+            
+                Element section01 = doc.createElement("section-01");
+                Element physical = doc.createElement("physical_item_display_for_printing");
+                
+                Element barcode = doc.createElement("barcode");
+                barcode.appendChild(doc.createTextNode(barcode1Text.getText()));
+                physical.appendChild(barcode);
+                
+                Element barcodecd = doc.createElement("barcodecd");
+                if (checkDigit)
+                {
+                    barcodecd.appendChild(doc.createTextNode("*" + barcode1Text.getText() + Utils.mod43(barcode1Text.getText()) + "*")); 
+                }
+                else
+                {
+                    barcodecd.appendChild(doc.createTextNode("*" + barcode1Text.getText() + "*"));
+                }
+                physical.appendChild(barcodecd);
+                
+                Element location = doc.createElement("location_code");
+                location.appendChild(doc.createTextNode(locationText.getText().replaceAll("&", "&&"))); //& -> && for BIAF mnemonic interpretation!
+                physical.appendChild(location);
+                
+                Element callnumber = doc.createElement("call_number");
+                callnumber.appendChild(doc.createTextNode(callnumberText.getText().replaceAll("&", "&&")));
+                physical.appendChild(callnumber);
+                
+                Element spine1 = doc.createElement("lbs-spine1");
+                spine1.appendChild(doc.createTextNode(line1Text.getText().replaceAll("&", "&&")));
+                physical.appendChild(spine1);
+                Element spine2 = doc.createElement("lbs-spine2");
+                spine2.appendChild(doc.createTextNode(line2Text.getText().replaceAll("&", "&&")));
+                physical.appendChild(spine2);
+                Element spine3 = doc.createElement("lbs-spine3");
+                spine3.appendChild(doc.createTextNode(line3Text.getText().replaceAll("&", "&&")));
+                physical.appendChild(spine3);
+                Element spine4 = doc.createElement("lbs-spine4");
+                spine4.appendChild(doc.createTextNode(line4Text.getText().replaceAll("&", "&&")));
+                physical.appendChild(spine4);
+                Element spine5 = doc.createElement("lbs-spine5");
+                spine5.appendChild(doc.createTextNode(line5Text.getText().replaceAll("&", "&&")));
+                physical.appendChild(spine5);
+                Element spine6 = doc.createElement("lbs-spine6");
+                spine6.appendChild(doc.createTextNode(line6Text.getText().replaceAll("&", "&&")));
+                physical.appendChild(spine6);
+                
+                section01.appendChild(physical);
+                printout.appendChild(section01);
+                i++;
+            }
+         // write the content into xml file
+            TransformerFactory transformerFactory = TransformerFactory.newInstance();
+            Transformer transformer = transformerFactory.newTransformer();
+            DOMSource source = new DOMSource(doc);
+            StreamResult result = new StreamResult(resultFile);
+      
+            transformer.transform(source, result);
+        }
+        catch (TransformerException e)
+        {
+            showError(e, "saveEditLabel", "TransformerException");
+            System.out.println("TransformerException: " + e);
+            return null;
+        }
+        catch (ParserConfigurationException e)
+        {
+            showError(e, "saveEditLabel", "ParserConfigurationException");
+            System.out.println("ParserConfigurationException: " + e);
+            return null;
+        }
+ 
+        System.out.println("XML-file saved");
+        return resultFile.getCanonicalPath();
+    }
+    
+    private boolean changeMode(int setMode)
+    {
+        if (mode != setMode)
+        {
+            if (setMode==SINGLEBARCODE)
+            {
+                // set template for single barcode
+                if (renameTemplates("singleBarcode", "barcode"))
+                {
+                    mode = SINGLEBARCODE;
+                    
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else if (setMode==SINGLESPINE)
+            {
+                // set template for single spine
+                if (renameTemplates("singleSpine", "spine"))
+                {
+                    mode = SINGLESPINE;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else if (setMode==MULTIBARCODE)
+            {
+                
+                if (mode != MULTIBARCODE)
+                {
+                    // set template for multiple barcodes
+                    if (renameTemplates("multipleBarcode", "barcode3x7"))
+                    {
+                        mode = MULTIBARCODE;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+            }
+            else if (setMode==MULTISPINE)
+            {
+                if (mode != MULTISPINE)
+                {
+                    // set template for multiple spines
+                    if (renameTemplates("multipleSpine", "spine3x7"))
+                    {
+                        mode = MULTISPINE;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+            }
+        }
+        System.out.println("mode=" + mode);
+        return true;
+    }
+    
     private boolean renameTemplates(String parameterName, String defValue)
     {
         Path source = null;
@@ -928,6 +1333,24 @@ public class LabelTool implements ActionListener
         }
 
         return true;
+    }
+    
+    public static int isNumeric(String str)  
+    {  
+      int number=1;
+      try  
+      {  
+          number = Integer.parseInt(str);  
+      }  
+      catch(Exception e)  
+      {  
+          return 1;  
+      }  
+      if (number > 100) 
+      {
+          return 100;
+      }
+      return number;  
     }
 
     private JComponent makeTextPanel1(String text)
@@ -1058,6 +1481,11 @@ public class LabelTool implements ActionListener
         bothButton.setMnemonic(KeyEvent.VK_O);
         bothButton.setActionCommand("both");
         bothButton.addActionListener(this);
+        //Edit button
+        JButton editButton = new JButton("Edit Labels");
+        editButton.setMnemonic(KeyEvent.VK_E);
+        editButton.setActionCommand("edit");
+        editButton.addActionListener(this);
 
         panel.add(tabTitle);
         panel.add(subpanel1);
@@ -1081,7 +1509,7 @@ public class LabelTool implements ActionListener
         subpanel4.add(pSpineButton);
 
         subpanel5.add(bothButton);
-        subpanel5.add(new JLabel("  "));
+        subpanel5.add(editButton);
         
         panel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
@@ -1163,6 +1591,302 @@ public class LabelTool implements ActionListener
         panel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
         return panel;
+    }
+    
+    private JComponent makeEditPanel(String text, String filePath)
+    {
+     // mainpanel
+        JPanel panel = new JPanel(new GridLayout(14, 1, 10, 10));
+        JLabel tabTitle = new JLabel(text);
+        tabTitle.setHorizontalAlignment(JLabel.CENTER);
+        tabTitle.setVerticalAlignment(JLabel.TOP);
+
+        // subpanels
+        JPanel subpanel1 = new JPanel(new GridLayout(1, 4, 10, 10));
+        JPanel subpanel2 = new JPanel(new GridLayout(1, 4, 10, 10));
+        JPanel subpanel3 = new JPanel(new GridLayout(1, 4, 10, 10));
+        JPanel subpanel4 = new JPanel(new GridLayout(1, 4, 10, 10));
+        JPanel subpanel5 = new JPanel(new GridLayout(1, 4, 10, 10));
+        JPanel subpanel6 = new JPanel(new GridLayout(1, 4, 10, 10));
+        JPanel subpanel7 = new JPanel(new GridLayout(1, 4, 10, 10));  
+        
+        JPanel subpanel8 = new JPanel(new GridLayout(1, 3, 10, 10));
+        JPanel subpanel8_2 = new JPanel(new GridLayout(1, 4, 10, 10));
+
+        JPanel subpanel10 = new JPanel(new GridLayout(1, 2, 60, 10));
+        JPanel subpanel11 = new JPanel(new GridLayout(1, 2, 60, 10));
+        JPanel subpanel12 = new JPanel(new GridLayout(1, 2, 60, 10));
+
+        //spine label
+        JLabel spineLabel = new JLabel("Spine label", SwingConstants.CENTER);
+        
+        JLabel line1Label = new JLabel("Line 1", SwingConstants.RIGHT);
+        JLabel line2Label = new JLabel("Line 2", SwingConstants.RIGHT);
+        JLabel line3Label = new JLabel("Line 3", SwingConstants.RIGHT);
+        JLabel line4Label = new JLabel("Line 4", SwingConstants.RIGHT);
+        JLabel line5Label = new JLabel("Line 5", SwingConstants.RIGHT);
+        JLabel line6Label = new JLabel("Line 6", SwingConstants.RIGHT);
+        
+        line1Text = new JTextField(10);
+        line2Text = new JTextField(10);
+        line3Text = new JTextField(10);
+        line4Text = new JTextField(10);
+        line5Text = new JTextField(10);
+        line6Text = new JTextField(10);
+        line1Text.addMouseListener(new MouseAdapter() 
+        {
+            @Override
+            public void mouseClicked(MouseEvent e) 
+            {
+                if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 1) 
+                {
+                    line1Text.selectAll();
+                }
+            }
+        });
+        line2Text.addMouseListener(new MouseAdapter() 
+        {
+            @Override
+            public void mouseClicked(MouseEvent e) 
+            {
+                if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 1) 
+                {
+                    line2Text.selectAll();
+                }
+            }
+        });
+        line3Text.addMouseListener(new MouseAdapter() 
+        {
+            @Override
+            public void mouseClicked(MouseEvent e) 
+            {
+                if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 1) 
+                {
+                    line3Text.selectAll();
+                }
+            }
+        });
+        line4Text.addMouseListener(new MouseAdapter() 
+        {
+            @Override
+            public void mouseClicked(MouseEvent e) 
+            {
+                if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 1) 
+                {
+                    line4Text.selectAll();
+                }
+            }
+        });
+        line5Text.addMouseListener(new MouseAdapter() 
+        {
+            @Override
+            public void mouseClicked(MouseEvent e) 
+            {
+                if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 1) 
+                {
+                    line5Text.selectAll();
+                }
+            }
+        });
+        line6Text.addMouseListener(new MouseAdapter() 
+        {
+            @Override
+            public void mouseClicked(MouseEvent e) 
+            {
+                if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 1) 
+                {
+                    line6Text.selectAll();
+                }
+            }
+        });
+        
+        //barcode
+        JLabel barcodeLabel = new JLabel("Barcode", SwingConstants.CENTER);
+        
+        JLabel locationLabel = new JLabel("Location", SwingConstants.RIGHT);
+        JLabel barcode1Label = new JLabel("Barcode", SwingConstants.RIGHT);
+        JLabel callnumberLabel = new JLabel("Call number", SwingConstants.RIGHT);
+        
+        locationText = new JTextField(10);
+        barcode1Text = new JTextField(10);
+        callnumberText = new JTextField(10);
+        locationText.addMouseListener(new MouseAdapter() 
+        {
+            @Override
+            public void mouseClicked(MouseEvent e) 
+            {
+                if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 1) 
+                {
+                    locationText.selectAll();
+                }
+            }
+        });
+        barcode1Text.addMouseListener(new MouseAdapter() 
+        {
+            @Override
+            public void mouseClicked(MouseEvent e) 
+            {
+                if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 1) 
+                {
+                    barcode1Text.selectAll();
+                }
+            }
+        });
+        callnumberText.addMouseListener(new MouseAdapter() 
+        {
+            @Override
+            public void mouseClicked(MouseEvent e) 
+            {
+                if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 1) 
+                {
+                    callnumberText.selectAll();
+                }
+            }
+        });
+        
+        //number of labels
+        numberOfLabelsText = new JTextField(2);
+        numberOfLabelsText.setText("1");
+        numberOfLabelsText.addMouseListener(new MouseAdapter() 
+        {
+            @Override
+            public void mouseClicked(MouseEvent e) 
+            {
+                if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 1) 
+                {
+                    numberOfLabelsText.selectAll();
+                }
+            }
+        });
+        
+        //clear all button
+        JButton clearButton = new JButton("Clear fields");
+        clearButton.setMnemonic(KeyEvent.VK_B);
+        clearButton.setActionCommand("clearEdit");
+        clearButton.addActionListener(this);
+        
+        //subpanel1
+        subpanel1.add(new JLabel("  "));
+        subpanel1.add(spineLabel);
+        subpanel1.add(new JLabel("  "));
+        subpanel1.add(barcodeLabel);
+        //subpanel2
+        subpanel2.add(line1Label);
+        subpanel2.add(line1Text);
+        subpanel2.add(locationLabel);
+        subpanel2.add(locationText);
+        //subpanel3
+        subpanel3.add(line2Label);
+        subpanel3.add(line2Text);
+        subpanel3.add(barcode1Label);
+        subpanel3.add(barcode1Text);
+        //subpanel4
+        subpanel4.add(line3Label);
+        subpanel4.add(line3Text);
+        subpanel4.add(callnumberLabel);
+        subpanel4.add(callnumberText);
+        //subpanel5
+        subpanel5.add(line4Label);
+        subpanel5.add(line4Text);
+        subpanel5.add(new JLabel("  "));    
+        subpanel5.add(new JLabel("  "));
+        //subpanel6
+        subpanel6.add(line5Label);
+        subpanel6.add(line5Text);
+        subpanel6.add(new JLabel("  "));
+        subpanel6.add(new JLabel("  "));
+        //subpanel7
+        subpanel7.add(line6Label);
+        subpanel7.add(line6Text);
+        subpanel7.add(new JLabel("  "));
+        subpanel7.add(new JLabel("  "));
+        //subpanel8
+        subpanel8_2.add(numberOfLabelsText);
+        subpanel8_2.add(new JLabel("  "));
+        subpanel8_2.add(new JLabel("  "));
+        subpanel8.add(new JLabel("Number of labels to print: "));
+        subpanel8.add(subpanel8_2);
+        subpanel8.add(clearButton);
+
+        // print buttons
+        JButton barcodeButton = new JButton("Print Barcode");
+        barcodeButton.setMnemonic(KeyEvent.VK_B);
+        barcodeButton.setActionCommand("barcodeEdit");
+        barcodeButton.addActionListener(this);
+        JButton spineButton = new JButton("Print Spine Label");
+        spineButton.setMnemonic(KeyEvent.VK_S);
+        spineButton.setActionCommand("spineEdit");
+        spineButton.addActionListener(this);
+        // preview buttons
+        JButton pBarcodeButton = new JButton("Preview Barcode");
+        pBarcodeButton.setMnemonic(KeyEvent.VK_P);
+        pBarcodeButton.setActionCommand("pbarcodeEdit");
+        pBarcodeButton.addActionListener(this);
+        JButton pSpineButton = new JButton("Preview Spine Label");
+        pSpineButton.setMnemonic(KeyEvent.VK_L);
+        pSpineButton.setActionCommand("pspineEdit");
+        pSpineButton.addActionListener(this);
+        // print both button
+        JButton bothButton = new JButton("Print Both");
+        bothButton.setMnemonic(KeyEvent.VK_O);
+        bothButton.setActionCommand("bothEdit");
+        bothButton.addActionListener(this);
+        //Cancel button
+        JButton cancelButton = new JButton("Cancel");
+        cancelButton.setMnemonic(KeyEvent.VK_C);
+        cancelButton.setActionCommand("cancel");
+        cancelButton.addActionListener(this);
+
+        panel.add(tabTitle);
+        panel.add(subpanel1);
+        panel.add(subpanel2);
+        panel.add(subpanel3);
+        panel.add(subpanel4);
+        panel.add(subpanel5);
+        panel.add(subpanel6);
+        panel.add(subpanel7);
+        panel.add(new JLabel("  "));
+        panel.add(subpanel8);
+        panel.add(new JLabel("  "));
+        panel.add(subpanel10);
+        panel.add(subpanel11);
+        panel.add(subpanel12);
+
+        subpanel10.add(barcodeButton);
+        subpanel10.add(pBarcodeButton);
+
+        subpanel11.add(spineButton);
+        subpanel11.add(pSpineButton);
+
+        subpanel12.add(bothButton);
+        subpanel12.add(cancelButton);
+        
+        panel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+
+        return panel;
+    }
+    
+    private void clearEditFields()
+    {
+        lbspine1Edit="";
+        lbspine2Edit="";
+        lbspine3Edit="";
+        lbspine4Edit="";
+        lbspine5Edit="";
+        lbspine6Edit="";
+        locationcodeEdit="";
+        barcodeEdit="";
+        callnumberEdit="";
+        line1Text.setText("");
+        line2Text.setText("");
+        line3Text.setText("");
+        line4Text.setText("");
+        line5Text.setText("");
+        line6Text.setText("");
+        locationText.setText("");
+        barcode1Text.setText("");
+        callnumberText.setText("");
+        numberOfLabelsText.setText("1");
     }
 
     private void showError(Exception e, String module, String message)
