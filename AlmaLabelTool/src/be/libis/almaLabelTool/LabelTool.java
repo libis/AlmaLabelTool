@@ -1431,30 +1431,36 @@ public class LabelTool implements ActionListener
         // PID & Barcode
         JLabel pidLabel = new JLabel("PID", SwingConstants.RIGHT);
         pidText = new JTextField(15);
-        pidText.addMouseListener(new MouseAdapter() 
+        pidText.addFocusListener(new java.awt.event.FocusAdapter() 
         {
-            @Override
-            public void mouseClicked(MouseEvent e) 
+            public void focusGained(java.awt.event.FocusEvent evt) 
             {
-                if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 1) 
+                SwingUtilities.invokeLater(new Runnable() 
                 {
-                    barcodeText.setText("");
-                    pidText.selectAll();
-                }
+                    @Override
+                    public void run() 
+                    {
+                        barcodeText.setText("");
+                        pidText.selectAll();
+                    }
+                });
             }
         });
         JLabel barcodeLabel = new JLabel("Barcode", SwingConstants.RIGHT);
         barcodeText = new JTextField(15);
-        barcodeText.addMouseListener(new MouseAdapter() 
+        barcodeText.addFocusListener(new java.awt.event.FocusAdapter() 
         {
-            @Override
-            public void mouseClicked(MouseEvent e) 
+            public void focusGained(java.awt.event.FocusEvent evt) 
             {
-                if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 1) 
+                SwingUtilities.invokeLater(new Runnable() 
                 {
-                    pidText.setText("");
-                    barcodeText.selectAll();
-                }
+                    @Override
+                    public void run() 
+                    {
+                        pidText.setText("");
+                        barcodeText.selectAll();
+                    }
+                });
             }
         });
 
@@ -1533,15 +1539,18 @@ public class LabelTool implements ActionListener
         // User Identifier
         JLabel idLabel = new JLabel("User Identifier", SwingConstants.RIGHT);
         idText = new JTextField(15);
-        idText.addMouseListener(new MouseAdapter() 
+        idText.addFocusListener(new java.awt.event.FocusAdapter() 
         {
-            @Override
-            public void mouseClicked(MouseEvent e) 
+            public void focusGained(java.awt.event.FocusEvent evt) 
             {
-                if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 1) 
+                SwingUtilities.invokeLater(new Runnable() 
                 {
-                    idText.selectAll();
-                }
+                    @Override
+                    public void run() 
+                    {
+                        idText.selectAll();
+                    }
+                });
             }
         });
         
@@ -1633,70 +1642,88 @@ public class LabelTool implements ActionListener
         line4Text = new JTextField(10);
         line5Text = new JTextField(10);
         line6Text = new JTextField(10);
-        line1Text.addMouseListener(new MouseAdapter() 
+        line1Text.addFocusListener(new java.awt.event.FocusAdapter() 
         {
-            @Override
-            public void mouseClicked(MouseEvent e) 
+            public void focusGained(java.awt.event.FocusEvent evt) 
             {
-                if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 1) 
+                SwingUtilities.invokeLater(new Runnable() 
                 {
-                    line1Text.selectAll();
-                }
+                    @Override
+                    public void run() 
+                    {
+                        line1Text.selectAll();
+                    }
+                });
             }
         });
-        line2Text.addMouseListener(new MouseAdapter() 
+        line2Text.addFocusListener(new java.awt.event.FocusAdapter() 
         {
-            @Override
-            public void mouseClicked(MouseEvent e) 
+            public void focusGained(java.awt.event.FocusEvent evt) 
             {
-                if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 1) 
+                SwingUtilities.invokeLater(new Runnable() 
                 {
-                    line2Text.selectAll();
-                }
+                    @Override
+                    public void run() 
+                    {
+                        line2Text.selectAll();
+                    }
+                });
             }
         });
-        line3Text.addMouseListener(new MouseAdapter() 
+        line3Text.addFocusListener(new java.awt.event.FocusAdapter() 
         {
-            @Override
-            public void mouseClicked(MouseEvent e) 
+            public void focusGained(java.awt.event.FocusEvent evt) 
             {
-                if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 1) 
+                SwingUtilities.invokeLater(new Runnable() 
                 {
-                    line3Text.selectAll();
-                }
+                    @Override
+                    public void run() 
+                    {
+                        line3Text.selectAll();
+                    }
+                });
             }
         });
-        line4Text.addMouseListener(new MouseAdapter() 
+        line4Text.addFocusListener(new java.awt.event.FocusAdapter() 
         {
-            @Override
-            public void mouseClicked(MouseEvent e) 
+            public void focusGained(java.awt.event.FocusEvent evt) 
             {
-                if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 1) 
+                SwingUtilities.invokeLater(new Runnable() 
                 {
-                    line4Text.selectAll();
-                }
+                    @Override
+                    public void run() 
+                    {
+                        line4Text.selectAll();
+                    }
+                });
             }
         });
-        line5Text.addMouseListener(new MouseAdapter() 
+        line5Text.addFocusListener(new java.awt.event.FocusAdapter() 
         {
-            @Override
-            public void mouseClicked(MouseEvent e) 
+            public void focusGained(java.awt.event.FocusEvent evt) 
             {
-                if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 1) 
+                SwingUtilities.invokeLater(new Runnable() 
                 {
-                    line5Text.selectAll();
-                }
+                    @Override
+                    public void run() 
+                    {
+                        line5Text.selectAll();
+                    }
+                });
             }
         });
-        line6Text.addMouseListener(new MouseAdapter() 
+        line6Text.addFocusListener(new java.awt.event.FocusAdapter() 
         {
-            @Override
-            public void mouseClicked(MouseEvent e) 
+            public void focusGained(java.awt.event.FocusEvent evt) 
             {
-                if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 1) 
+                SwingUtilities.invokeLater(new Runnable() 
                 {
-                    line6Text.selectAll();
-                }
+                    @Override
+                    public void run() 
+                    {
+                        line6Text.selectAll();
+                    }
+                });
             }
         });
         
@@ -1710,52 +1737,64 @@ public class LabelTool implements ActionListener
         locationText = new JTextField(10);
         barcode1Text = new JTextField(10);
         callnumberText = new JTextField(10);
-        locationText.addMouseListener(new MouseAdapter() 
+        locationText.addFocusListener(new java.awt.event.FocusAdapter() 
         {
-            @Override
-            public void mouseClicked(MouseEvent e) 
+            public void focusGained(java.awt.event.FocusEvent evt) 
             {
-                if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 1) 
+                SwingUtilities.invokeLater(new Runnable() 
                 {
-                    locationText.selectAll();
-                }
+                    @Override
+                    public void run() 
+                    {
+                        locationText.selectAll();
+                    }
+                });
             }
         });
-        barcode1Text.addMouseListener(new MouseAdapter() 
+        barcode1Text.addFocusListener(new java.awt.event.FocusAdapter() 
         {
-            @Override
-            public void mouseClicked(MouseEvent e) 
+            public void focusGained(java.awt.event.FocusEvent evt) 
             {
-                if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 1) 
+                SwingUtilities.invokeLater(new Runnable() 
                 {
-                    barcode1Text.selectAll();
-                }
+                    @Override
+                    public void run() 
+                    {
+                        barcode1Text.selectAll();
+                    }
+                });
             }
         });
-        callnumberText.addMouseListener(new MouseAdapter() 
+        callnumberText.addFocusListener(new java.awt.event.FocusAdapter() 
         {
-            @Override
-            public void mouseClicked(MouseEvent e) 
+            public void focusGained(java.awt.event.FocusEvent evt) 
             {
-                if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 1) 
+                SwingUtilities.invokeLater(new Runnable() 
                 {
-                    callnumberText.selectAll();
-                }
+                    @Override
+                    public void run() 
+                    {
+                        callnumberText.selectAll();
+                    }
+                });
             }
         });
         
         //number of labels
         numberOfLabelsText = new JTextField(2);
         numberOfLabelsText.setText("1");
-        numberOfLabelsText.addMouseListener(new MouseAdapter() 
+        numberOfLabelsText.addFocusListener(new java.awt.event.FocusAdapter() 
         {
-            @Override
-            public void mouseClicked(MouseEvent e) 
+            public void focusGained(java.awt.event.FocusEvent evt) 
             {
-                if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 1) 
+                SwingUtilities.invokeLater(new Runnable() 
                 {
-                    numberOfLabelsText.selectAll();
-                }
+                    @Override
+                    public void run() 
+                    {
+                        numberOfLabelsText.selectAll();
+                    }
+                });
             }
         });
         
