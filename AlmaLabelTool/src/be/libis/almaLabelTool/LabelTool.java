@@ -25,7 +25,7 @@ import static java.nio.file.StandardCopyOption.*;
 
 public class LabelTool implements ActionListener
 {
-    static String VERSION = "1.0.11";
+    static String VERSION = "1.0.12";
 
     static String MANUF = "LIBIS 2014";
 
@@ -57,12 +57,14 @@ public class LabelTool implements ActionListener
     JTextField line4Text;
     JTextField line5Text;
     JTextField line6Text;
+    JCheckBox keepEmptyCheckBox;
+    boolean keepEmpty=false;
     JTextField locationText;
     JTextField barcode1Text;
     JTextField callnumberText;
     JTextField numberOfLabelsText;
     int numberOfLabels=1;//only for edit screen
-    boolean checkDigit = false;
+    boolean checkDigit = true;
     
     String lbspine1Edit="";
     String lbspine2Edit="";
@@ -112,9 +114,9 @@ public class LabelTool implements ActionListener
             return;
         }
         
-        if (p.getProperty("checkDigit", "true").toUpperCase().equals("TRUE"))
+        if (p.getProperty("checkDigit", "true").toUpperCase().equals("FALSE"))
         {
-            checkDigit = true;
+            checkDigit = false;
         }
         
         JComponent panel1 = makeTextPanel1("Print labels from Alma export file");
@@ -396,7 +398,7 @@ public class LabelTool implements ActionListener
             }
             catch (Exception e)
             {
-                System.out.println("Error saving edit screen to XML-file: " + e.getMessage());
+                System.out.println("Error saving edit screen to XML-file: " + e);
                 JOptionPane.showMessageDialog(frame, "Error saving edit screen to XML", "Info", JOptionPane.INFORMATION_MESSAGE);
                 return;
             }
@@ -1214,9 +1216,26 @@ public class LabelTool implements ActionListener
             TransformerFactory transformerFactory = TransformerFactory.newInstance();
             Transformer transformer = transformerFactory.newTransformer();
             DOMSource source = new DOMSource(doc);
-            StreamResult result = new StreamResult(resultFile);
-      
+            //StreamResult result = new StreamResult(resultFile);
+            StringWriter writer = new StringWriter();
+            StreamResult result = new StreamResult(writer);
+            
             transformer.transform(source, result);
+            String resultString= writer.toString();
+            //System.out.println(resultString);
+            if (keepEmpty)
+            {
+                resultString=resultString.replaceAll("<lbs-spine1/>","<lbs-spine1>&#160;</lbs-spine1>");
+                resultString=resultString.replaceAll("<lbs-spine2/>","<lbs-spine2>&#160;</lbs-spine2>");
+                resultString=resultString.replaceAll("<lbs-spine3/>","<lbs-spine3>&#160;</lbs-spine3>");
+                resultString=resultString.replaceAll("<lbs-spine4/>","<lbs-spine4>&#160;</lbs-spine4>");
+                resultString=resultString.replaceAll("<lbs-spine5/>","<lbs-spine5>&#160;</lbs-spine5>");
+            }
+            //System.out.println(resultString);
+            PrintWriter outWriter = new PrintWriter(resultFile, "UTF-8");
+            outWriter.write(resultString);
+            outWriter.close();
+            
         }
         catch (TransformerException e)
         {
@@ -1605,7 +1624,7 @@ public class LabelTool implements ActionListener
     private JComponent makeEditPanel(String text, String filePath)
     {
      // mainpanel
-        JPanel panel = new JPanel(new GridLayout(14, 1, 10, 10));
+        JPanel panel = new JPanel(new GridLayout(15, 1, 10, 10));
         JLabel tabTitle = new JLabel(text);
         tabTitle.setHorizontalAlignment(JLabel.CENTER);
         tabTitle.setVerticalAlignment(JLabel.TOP);
@@ -1617,7 +1636,8 @@ public class LabelTool implements ActionListener
         JPanel subpanel4 = new JPanel(new GridLayout(1, 4, 10, 10));
         JPanel subpanel5 = new JPanel(new GridLayout(1, 4, 10, 10));
         JPanel subpanel6 = new JPanel(new GridLayout(1, 4, 10, 10));
-        JPanel subpanel7 = new JPanel(new GridLayout(1, 4, 10, 10));  
+        JPanel subpanel7 = new JPanel(new GridLayout(1, 4, 10, 10));
+        JPanel subpanel7a = new JPanel(new GridLayout(1, 4, 10, 10));
         
         JPanel subpanel8 = new JPanel(new GridLayout(1, 3, 10, 10));
         JPanel subpanel8_2 = new JPanel(new GridLayout(1, 4, 10, 10));
@@ -1635,6 +1655,7 @@ public class LabelTool implements ActionListener
         JLabel line4Label = new JLabel("Line 4", SwingConstants.RIGHT);
         JLabel line5Label = new JLabel("Line 5", SwingConstants.RIGHT);
         JLabel line6Label = new JLabel("Line 6", SwingConstants.RIGHT);
+        JLabel emptyLineLabel = new JLabel("Print empty lines", SwingConstants.RIGHT);
         
         line1Text = new JTextField(10);
         line2Text = new JTextField(10);
@@ -1724,6 +1745,26 @@ public class LabelTool implements ActionListener
                         line6Text.selectAll();
                     }
                 });
+            }
+        });
+        JCheckBox keepEmptyCheckBox = new JCheckBox();
+        if (keepEmpty)
+        {
+            keepEmptyCheckBox.setSelected(true);
+        }
+        keepEmptyCheckBox.addItemListener(new ItemListener() 
+        {
+            public void itemStateChanged(ItemEvent e) 
+            {
+                if (e.getStateChange() == ItemEvent.DESELECTED) 
+                {
+                    keepEmpty=false;
+                }
+                if (e.getStateChange() == ItemEvent.SELECTED) 
+                {
+                    keepEmpty=true;
+                }
+                 
             }
         });
         
@@ -1839,6 +1880,11 @@ public class LabelTool implements ActionListener
         subpanel7.add(line6Text);
         subpanel7.add(new JLabel("  "));
         subpanel7.add(new JLabel("  "));
+        //subpanel7a
+        subpanel7a.add(emptyLineLabel);
+        subpanel7a.add(keepEmptyCheckBox);
+        subpanel7a.add(new JLabel("  "));
+        subpanel7a.add(new JLabel("  "));
         //subpanel8
         subpanel8_2.add(numberOfLabelsText);
         subpanel8_2.add(new JLabel("  "));
@@ -1884,6 +1930,7 @@ public class LabelTool implements ActionListener
         panel.add(subpanel5);
         panel.add(subpanel6);
         panel.add(subpanel7);
+        panel.add(subpanel7a);
         panel.add(new JLabel("  "));
         panel.add(subpanel8);
         panel.add(new JLabel("  "));
