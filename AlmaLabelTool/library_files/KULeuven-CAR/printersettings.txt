@@ -1,0 +1,18 @@
+Via Control Panel
+->Devices And Printers
+->Rechtsklikken op Zdesigner TLP 2844
+->Printing Preferences
+->tabblad Opties:   
+            Etikettype : Gebruiker Gedefinieerd
+            Papierformaat : mm
+            Breedte : 50
+            Hoogte : 25
+            Onprintbaar gebied : alles op 0
+->tabblad Geavanceerde instelling :     
+                    Mediatype : Label with gaps
+                    Eventueel onderaan klikken op “Kalibreren” om de etikethoogte te laten detecteren
+->Apply
+->OK
+
+In BIAF wordt voor spine.lbs “Label Printer 100x38” gebruikt met als instellingen W: 29,9 - H: 55,03
+Maar na kopiëren van de bestanden zou dat vanzelf correct moeten staan.
