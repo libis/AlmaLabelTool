@@ -25,9 +25,9 @@ import static java.nio.file.StandardCopyOption.*;
 
 public class LabelTool implements ActionListener
 {
-    static String VERSION = "1.0.12";
+    static String VERSION = "1.0.13";
 
-    static String MANUF = "LIBIS 2014";
+    static String MANUF = "LIBIS 2014-2017";
 
     static int MULTIBARCODE = 1;
     static int MULTISPINE = 2;
@@ -377,6 +377,7 @@ public class LabelTool implements ActionListener
         {
             if (mode<3) //multi: use filepicker
             {
+                parsedInAlma=true;
                 filePath = filePicker.getSelectedFilePath();
             }
             else //single: use webservice
